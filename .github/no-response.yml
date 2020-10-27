@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Configuration for probot-no-response - https://github.com/probot/no-response
 
 # Number of days of inactivity before an issue is closed for lack of response
@@ -13,3 +14,120 @@ closeComment: >
   information that is currently in the issue, we don't have enough information
   to take action. Please reach out if you have or find the answers we need so
   that we can investigate further.
+=======
+@@ -1,11 +1,21 @@
+PackageGeneratorView  =  vyžadovat  ' ./package-generator-view '
+modul . vývoz  =
+  konfigurace :
+    createInDevMode :
+      výchozí :  false
+      typ :  ' boolean '
+      description :  ' Je-li deaktivováno, generované balíčky jsou propojeny do Atom v normálním i dev režimu. Pokud je povoleno, generované balíčky jsou propojeny do Atom pouze v režimu dev. ''
+    balíčekParams :
+      title :  ' Parametry balíčku '
+      výchozí :  ' '
+      typ :  ' řetězec '
+      description :  ' Parameters related to apm init command for packages (`` --syntax <javascript-or-coffeescript> ``, `` -c <cesta nebo URL k balíčku Textmate> `` nebo `` - -template <Cesta k šabloně> ``) '
+    themeParams :
+      název :  ' Parametry motivu '
+      výchozí :  ' '
+      typ :  ' řetězec '
+      description :  ' Parameters related to apm init command for themes (`` -c <Path or URL to Textmate bundle> `` or' '--template <Path to template> ``) ' '
+
+  aktivovat :  ->
+    @view  =  nový  PackageGeneratorView ()
+  deaktivovat :  ->
+    @ pohled ? . zničit ()
+ 15  lib / package-generator-view.coffee
+@@ -80,7 +80,20 @@ třída PackageGeneratorView rozšiřuje View
+      skutečný
+
+  initPackage : ( packagePath , zpětné volání ) ->
+    @ runCommand ( atom . packages . getApmPath (), [ ' init ' , " - # { @mode } " , " # { packagePath } " ], zpětné volání)
+    args  =  @ generateArgumentList ([ ' init ' , " - # { @mode } " , " # { packagePath } " ], @ getOptionalParameters ())
+    @ SpustitPříkaz ( atom . Balíčky . GetApmPath (), args, zpětné volání)
+
+  generateArgumentList : ( args , parametry ) ->
+    pokud  parametry . trim ()
+      návrat  args . parametry concat  . split ( " " )
+    jiný
+      návrat args
+
+  getOptionalParameters :  ->
+    pokud  @mode  je  ‚ balíček ‘
+      zpětný  atom . config . get ( ' package-generator.packageParams ' )
+    jiný
+      zpětný  atom . config . get ( ' package-generator.themeParams ' )
+
+  linkPackage : ( packagePath , zpětné volání ) ->
+    args  = [ ' odkaz ' ]
+ 33  spec / package-generator-spec.coffee
+@@ -137,6 +137,7 @@ popsat 'Generátor balíčků', ->
+
+        it  " volání` APM init` a `APM link` " , ->
+          atom . config . set  ' package-generator.createInDevMode ' , false
+          atom . config . set  ' package-generator.packageParams ' , ' '
+
+          generateOutside  ->
+            expect ( apmExecute . argsForCall [ 0 ] [ 0 ]). toBe  atom . balíčky . getApmPath ()
+@@ -147,6 +148,7 @@ popsat 'Generátor balíčků', ->
+
+        to  " volání` APM init` a `APM link --dev` " , ->
+          atom . config . set  ' package-generator.createInDevMode ' , true
+          atom . config . set  ' package-generator.packageParams ' , ' '
+
+          generateOutside  ->
+            expect ( apmExecute . argsForCall [ 0 ] [ 0 ]). toBe  atom . balíčky . getApmPath ()
+@@ -155,6 +157,17 @@ popsat 'Generátor balíčků', ->
+            expect ( apmExecute . argsForCall [ 1 ] [ 1 ]). toEqual [ ' link ' , ' --dev ' , " # { packagePath } " ]
+            očekávat ( atom . open . argsForCall [ 0 ] [ 0 ]. pathsToOpen [ 0 ]). toBe packagePath
+
+        to  " volání` APM init --template / home / test` a `APM link` " , ->
+          atom . config . set  ' package-generator.createInDevMode ' , false
+          atom . config . set  ' package-generator.packageParams ' , ' --template / home / test '
+
+          generateOutside  ->
+            expect ( apmExecute . argsForCall [ 0 ] [ 0 ]). toBe  atom . balíčky . getApmPath ()
+            expect ( apmExecute . argsForCall [ 0 ] [ 1 ]). toEqual [ ' init ' , ' --package ' , " # { packagePath } " , ' --template ' , ' / home / test ' ]
+            expect ( apmExecute . argsForCall [ 1 ] [ 0 ]). toBe  atom . balíčky . getApmPath ()
+            expect ( apmExecute . argsForCall [ 1 ] [ 1 ]). toEqual [ ' link ' , " # { packagePath } " ]
+            očekávat ( atom . open . argsForCall [ 0 ] [ 0 ]. pathsToOpen [ 0 ]). toBe packagePath
+
+      popsat  " když je balíček vytvořen v adresáři balíků " , ->
+        it  " volání` APM init` " , ->
+          packageGeneratorView  =  $ ( getWorkspaceView ()). find ( " .package-generator " ). zobrazit ()
+@@ -183,6 +196,7 @@ popsat 'Generátor balíčků', ->
+
+      popsat  " když je téma vytvořeno mimo adresář balíků " , ->
+        it  " volání` APM init` a `APM link` " , ->
+          atom . config . set  ' package-generator.themeParams ' , ' '
+          packageGeneratorView  =  $ ( getWorkspaceView ()). find ( " .package-generator " ). zobrazit ()
+          expect ( packageGeneratorView . hasParent ()). toBeTruthy ()
+          packageGeneratorView . miniEditor . setText (packagePath)
+@@ -200,6 +214,25 @@ popsat 'Generátor balíčků', ->
+            expect ( apmExecute . argsForCall [ 1 ] [ 1 ]). toEqual [ ' link ' , " # { packagePath } " ]
+            očekávat ( atom . open . argsForCall [ 0 ] [ 0 ]. pathsToOpen [ 0 ]). toBe packagePath
+
+        to  " volání` APM init --template / home / test` a `APM link` " , ->
+          atom . config . set  ' package-generator.themeParams ' , ' --template / home / test '
+          packageGeneratorView  =  $ ( getWorkspaceView ()). find ( " .package-generator " ). zobrazit ()
+          expect ( packageGeneratorView . hasParent ()). toBeTruthy ()
+          packageGeneratorView . miniEditor . setText (packagePath)
+          apmExecute  =  spyOn (packageGeneratorView, ' runCommand ' ). andCallFake (příkaz, args, exit) ->
+            proces . nextTick  ->  exit ()
+          atom . příkazy . Expedice ( packageGeneratorView . Element , " jádro: potvrzení " )
+
+          čeká na  ->
+            atom . otevřeno . callCount  je  1
+
+          běží  ->
+            expect ( apmExecute . argsForCall [ 0 ] [ 0 ]). toBe  atom . balíčky . getApmPath ()
+            expect ( apmExecute . argsForCall [ 0 ] [ 1 ]). toEqual [ ' init ' , ' --theme ' , " # { packagePath } " , " --template " , " / home / test " ]
+            expect ( apmExecute . argsForCall [ 1 ] [ 0 ]). toBe  atom . balíčky . getApmPath ()
+            expect ( apmExecute . argsForCall [ 1 ] [ 1 ]). toEqual [ ' link ' , " # { packagePath } " ]
+            očekávat ( atom . open . argsForCall [ 0 ] [ 0 ]. pathsToOpen [ 0 ]). toBe packagePath
+
+      popsat  " když je téma vytvořeno uvnitř adresáře balíků " , ->
+        it  " volání` APM init` " , ->
+          packageGeneratorView  =  $ ( getWorkspaceView ()). find ( " .package-generator " ). zobrazit ()
+>>>>>>> Stashed changes
